@@ -1,0 +1,28 @@
+# $Id: Makefile.in,v 1.1.1.1 2005-04-14 02:03:34 hww3 Exp $
+@make_variables@
+VPATH=@srcdir@:@srcdir@/../..:../..
+OBJS=iowarrior.o IOWarriorLib.o
+MODDIR=Public.pmod/IO.pmod/
+MODNAME=IOWarrior
+MODULE_PMOD_IN=
+AUTODOC_SRC_IN=iowarrior.c
+
+CFLAGS=@IOWARRIOR_CFLAGS@
+LDFLAGS=@IOWARRIOR_LIBS@
+
+MODULE_LDFLAGS=@LDFLAGS@
+
+CONFIG_HEADERS=@CONFIG_HEADERS@
+
+@dynamic_module_makefile@
+@dependencies@
+
+release:
+	cvs rtag -D now RELEASE_1_${MIN} pike_modules/Public_IO_IOWarrior
+	cvs export -d Public_IO_IOWarrior-1.${MIN} -r RELEASE_1_${MIN} pike_modules/Public_IO_IOWarrior
+	cd Public_IO_IOWarrior-1.${MIN}
+	pike -x module --autoconf
+	rm -rf autom4*
+	cd .. 
+	tar czvf Public_IO_IOWarrior-1.${MIN}.tar.gz Public_IO_IOWarrior-1.${MIN}
+

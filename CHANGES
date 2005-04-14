@@ -1,0 +1,46 @@
+Version History
+
+Version 1.3
+
+- Added set_node_name()
+- Added add_ns() and set_ns()
+- Added get_root_node() and set_root_node()
+- Added select_xpath_nodes() to allow selection of nodes based on an XPath 
+    specification
+- Added support for creation of PI nodes
+- Added support for setting and deletion of attributes
+- More documentation
+
+Version 1.2
+
+- Support for creation of certain types of nodes
+- Support for adding children and siblings
+- Support for creating new documents
+- Support for output of document to XML 
+- More documentation
+- More constants
+- Testing clocks this module as 500% faster than Parser.XML.NSTree
+
+Limitations: 
+
+- Incomplete Namespace support
+- No support for adding attributes to nodes. 
+- Not all types of node can be created. 
+- No support for deleting or copying nodes.
+
+
+Version 1.1
+
+Support for getting namespace information from nodes.
+Support for dumping a node to XML.
+Support for more node operations, such as getting language.
+Constants have been shortened and moved into their own class.
+Approximately 30% of methods have documentation now.
+
+Version 1.0 
+
+This is the first release of the Public.Parser.XML2 module.
+There are very rudimentary parsing and tree navigation methods.
+Currently, the tree is static once parsed.
+
+

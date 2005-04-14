@@ -1,0 +1,23 @@
+# $Id: configure.in,v 1.1.1.1 2005-04-14 02:03:31 hww3 Exp $
+AC_INIT(iowarrior.cmod)
+
+AC_MODULE_INIT()
+AC_CONFIG_HEADERS(iowarrior_config.h)
+
+# PKG_CHECK_MODULES(XML2, libxml-2.0)
+
+IOWARRIOR_LIBS="-framework IOKit"
+
+CPPFLAGS="${CPPFLAGS} ${IOWARRIOR_CFLAGS}"
+LDFLAGS="${LDFLAGS} ${IOWARRIOR_LIBS}"
+
+#AC_CHECK_HEADERS(libxml/parser.h)
+
+#AC_CHECK_LIB(xml2, xmlParseMemory) 
+
+AC_SUBST(IOWARRIOR_CFLAGS) 
+AC_SUBST(IOWARRIOR_LIBS)
+
+AC_OUTPUT(Makefile)
+
+
