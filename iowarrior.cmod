@@ -13,7 +13,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: iowarrior.cmod,v 1.1.1.1 2005-04-14 02:03:31 hww3 Exp $
+ * $Id: iowarrior.cmod,v 1.2 2005-04-14 06:06:17 hww3 Exp $
  */
 
 /*
@@ -83,6 +83,7 @@
 
   typedef struct
   {
+    
     int instance;
   } IOWARRIOR_OBJECT_DATA;
 
@@ -93,23 +94,42 @@ PIKECLASS IOWarrior
 {
   CVAR IOWARRIOR_OBJECT_DATA * object_data;
 
-  PIKEFUN string IOWarriorReadInterface0()
+/*! @decl void set_interrupt_callback()
+ *!
+ */
+  PIKEFUN void set_interrupt_callback()
+  {
+    IOWarriorSetInterruptCallback();
+  }
+
+/*! @decl array(int) read_interface0()
+ *!
+ */
+  PIKEFUN array read_interface0()
   {
     char * data;
     int retval;
+    int num_elems = 4;
 
-    data = malloc(4);
+    data = malloc(num_elems);
 
-    if(data == NULL) Pike_error("IOWarriorReadInterface0(): unable to allocate memory.\n");
+    for(x=0; x<num_elems; x++)
+      data[x] = NULL;
+
+    if(data == NULL) Pike_error("read_interface0(): unable to allocate memory.\n");
 
     retval = IOWarriorReadInterface0(data);
 
-    printf("data %d %d %d %d\n", data[0], data[1], data[2], data[3]);
+    for(x=0; x<num_elems; x++)
+      push_int(data[i]);
 
-    push_text(data);
+    f_aggregate(num_elems);
   }
 
-  PIKEFUN int IOWarriorWriteInterface0(string d)
+/*! @decl int write_interface0(string d)
+ *!
+ */
+  PIKEFUN int write_interface0(string d)
   {
     int retval;
 
@@ -118,7 +138,10 @@ PIKECLASS IOWarrior
     push_int(retval);
   }
 
-  PIKEFUN int IOWarriorInterfaceListNodeAtIndex(int index)
+/*! @decl int interface_list_node(int index)
+ *!
+ */
+  PIKEFUN int interface_list_node(int index)
   {
      IOWarriorListNode * node;
      char * serial;
@@ -134,7 +157,10 @@ PIKECLASS IOWarrior
      push_int(node->interfaceType);
   }
 
-  PIKEFUN int IOWarriorIsPresent()
+/*! @decl int is_present()
+ *!
+ */
+  PIKEFUN int is_present()
   {
     int retval;
 
@@ -143,7 +169,10 @@ PIKECLASS IOWarrior
     push_int(retval);
   }
 
-  PIKEFUN int IOWarriorCountInterfaces()
+/*! @decl int count_interfaces()
+ *!
+ */
+  PIKEFUN int count_interfaces()
   {
     int retval;
 
@@ -151,8 +180,6 @@ PIKECLASS IOWarrior
 
     push_int(retval);
   }
-
-  
 
   INIT
   {
