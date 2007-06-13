@@ -13,7 +13,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: iowarrior.cmod,v 1.3 2007-06-13 02:08:00 hww3 Exp $
+ * $Id: iowarrior.cmod,v 1.4 2007-06-13 02:47:18 hww3 Exp $
  */
 
 /*
@@ -116,12 +116,12 @@ PIKECLASS IOWarrior
 //    IOWarriorSetInterruptCallback();
   }
 
-/*! @decl int interface_type_for_index(int index)
+/*! @decl int interface_type_for_index(int index) */
 PIKEFUN int interface_type_for_index(int index)
 {
   IOWarriorListNode *listNode;
 
-  listNode = IOWarriorInterfaceListNodeAtIndex (index);
+  listNode = IOWarriorInterfaceListNodeAtIndex ((int)index);
 
   pop_stack();
 
@@ -161,10 +161,10 @@ PIKEFUN int interface_type_for_index(int index)
     f_aggregate(num_elems);
   }
 
-/*! @decl array(int) read_interface(int interface, int reportID)
+/*! @decl array(int) read_interface(int iface, int reportID)
  *!
  */
-  PIKEFUN array read_interface(int interface, int reportID)
+  PIKEFUN array read_interface(int iface, int reportID)
   {
     char * data;
     int retval;
@@ -173,7 +173,7 @@ PIKEFUN int interface_type_for_index(int index)
 
     IOWarriorListNode *listNode;
 
-    listNode = IOWarriorInterfaceListNodeAtIndex (interface);
+    listNode = IOWarriorInterfaceListNodeAtIndex (iface);
 
     data = malloc(num_elems);
 
@@ -207,15 +207,18 @@ PIKEFUN int interface_type_for_index(int index)
     push_int(retval);
   }
 
-/*! @decl int write_interface(int interface, string d)
+/*! @decl int write_interface(int iface, string d)
  *!
  */
-  PIKEFUN int write_interface(int interface, string d)
+  PIKEFUN int write_interface(int iface, string d)
   {
     int retval;
     IOWarriorListNode *listNode;
 
-    listNode = IOWarriorInterfaceListNodeAtIndex (interface);
+    listNode = IOWarriorInterfaceListNodeAtIndex(iface);
+
+    if(listNode == NULL)
+      Pike_error("invalid interface\n");
 
     retval = IOWarriorWriteToInterface(listNode->ioWarriorHIDInterface, d->len, d->str);
 
@@ -224,21 +227,26 @@ PIKEFUN int interface_type_for_index(int index)
     push_int(retval);
   }
 
-/*! @decl int interface_list_node(int index)
+/*! @decl int interface_list_node(int ind)
  *!
  */
-  PIKEFUN int interface_list_node(int index)
+  PIKEFUN int interface_list_node(int ind)
   {
      IOWarriorListNode * node;
      char * serial;
+int interfaceCount;
+int x;
+int retval;
 
-     node = IOWarriorInterfaceListNodeAtIndex(index);
+retval = IOWarriorCountInterfaces();
+
+     node = IOWarriorInterfaceListNodeAtIndex(ind);
      if(node == NULL)
        Pike_error("node does not exist!\n");
-    
+
      serial = CFStringGetCStringPtr(node->serialNumber, kCFStringEncodingUnicode);
 
-     printf("device: %s\n", serial);
+     // printf("device: %s\n", serial);
      pop_stack();
      push_int(node->interfaceType);
   }
