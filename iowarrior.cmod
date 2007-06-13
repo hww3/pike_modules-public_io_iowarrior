@@ -13,7 +13,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: iowarrior.cmod,v 1.2 2005-04-14 06:06:17 hww3 Exp $
+ * $Id: iowarrior.cmod,v 1.3 2007-06-13 02:08:00 hww3 Exp $
  */
 
 /*
@@ -70,6 +70,8 @@
 #include "iowarrior_config.h"
 #include "util.h"
 
+#define CONSTANT(Y, X) do{struct svalue * _sv; _sv = malloc(sizeof(struct svalue)); _sv->type = T_INT; _sv->u.integer = X; simple_add_constant(Y, _sv, 0); free(_sv);} while(0);
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -92,6 +94,18 @@
  */
 PIKECLASS IOWarrior
 {
+
+  EXTRA 
+  {
+   CONSTANT("kIOWarrior24Interface0", kIOWarrior24Interface0);
+   CONSTANT("kIOWarrior24Interface1", kIOWarrior24Interface1);
+   CONSTANT("kIOWarrior24PVInterface0", kIOWarrior24PVInterface0);
+   CONSTANT("kIOWarrior24PVInterface1", kIOWarrior24PVInterface1);
+   CONSTANT("kIOWarrior40Interface0", kIOWarrior40Interface0);
+   CONSTANT("kIOWarrior40Interface1", kIOWarrior40Interface1);
+   CONSTANT("kIOWarrior56Interface0", kIOWarrior56Interface0);
+   CONSTANT("kIOWarrior56Interface1", kIOWarrior56Interface1);
+  }
   CVAR IOWARRIOR_OBJECT_DATA * object_data;
 
 /*! @decl void set_interrupt_callback()
@@ -99,8 +113,24 @@ PIKECLASS IOWarrior
  */
   PIKEFUN void set_interrupt_callback()
   {
-    IOWarriorSetInterruptCallback();
+//    IOWarriorSetInterruptCallback();
   }
+
+/*! @decl int interface_type_for_index(int index)
+PIKEFUN int interface_type_for_index(int index)
+{
+  IOWarriorListNode *listNode;
+
+  listNode = IOWarriorInterfaceListNodeAtIndex (index);
+
+  pop_stack();
+
+  if(listNode)
+    push_int(listNode->interfaceType);
+  else push_int(-1);
+
+
+}
 
 /*! @decl array(int) read_interface0()
  *!
@@ -110,6 +140,7 @@ PIKECLASS IOWarrior
     char * data;
     int retval;
     int num_elems = 4;
+    int x;
 
     data = malloc(num_elems);
 
@@ -120,20 +151,75 @@ PIKECLASS IOWarrior
 
     retval = IOWarriorReadInterface0(data);
 
+  //  for(x=0; x<num_elems; x++)
+  //    printf("%02x\n", (unsigned char)(data[x]));
+
+
     for(x=0; x<num_elems; x++)
-      push_int(data[i]);
+      push_int((unsigned char)data[x]);
 
     f_aggregate(num_elems);
   }
 
+/*! @decl array(int) read_interface(int interface, int reportID)
+ *!
+ */
+  PIKEFUN array read_interface(int interface, int reportID)
+  {
+    char * data;
+    int retval;
+    int num_elems = 4;
+    int x;
+
+    IOWarriorListNode *listNode;
+
+    listNode = IOWarriorInterfaceListNodeAtIndex (interface);
+
+    data = malloc(num_elems);
+
+    for(x=0; x<num_elems; x++)
+      data[x] = NULL;
+
+    if(data == NULL) Pike_error("read_interface0(): unable to allocate memory.\n");
+
+    retval = IOWarriorReadFromInterface(listNode->ioWarriorHIDInterface, reportID, num_elems, data);
+
+  //  for(x=0; x<num_elems; x++)
+  //    printf("%02x\n", (unsigned char)(data[x]));
+
+    pop_n_elems(args);
+
+    for(x=0; x<num_elems; x++)
+      push_int((unsigned char)data[x]);
+
+    f_aggregate(num_elems);
+  }
 /*! @decl int write_interface0(string d)
  *!
  */
   PIKEFUN int write_interface0(string d)
   {
     int retval;
+    retval = IOWarriorWriteInterface0(d->str);
 
-    retval = IOWarriorReadInterface0(d->str);
+    pop_n_elems(args);
+
+    push_int(retval);
+  }
+
+/*! @decl int write_interface(int interface, string d)
+ *!
+ */
+  PIKEFUN int write_interface(int interface, string d)
+  {
+    int retval;
+    IOWarriorListNode *listNode;
+
+    listNode = IOWarriorInterfaceListNodeAtIndex (interface);
+
+    retval = IOWarriorWriteToInterface(listNode->ioWarriorHIDInterface, d->len, d->str);
+
+    pop_n_elems(args);
 
     push_int(retval);
   }

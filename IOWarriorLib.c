@@ -3,7 +3,7 @@
  *  IOWarriorHIDTest
  *
  *  Created by ilja on Sun Dec 29 2002.
- *  $Id: IOWarriorLib.c,v 1.1.1.1 2005-04-14 02:03:33 hww3 Exp $
+ *  $Id: IOWarriorLib.c,v 1.2 2007-06-13 02:08:00 hww3 Exp $
  *
  */
 
@@ -151,6 +151,55 @@ int IOWarriorInit ()
     IOWarriorRemoved(NULL, gIOWarriorRemovedIter);
      
     CFRelease(matchingDict);
+	
+	
+	// do the same for IOWarrior56 devices
+    usbProduct = kIOWarrior56DeviceID;
+    matchingDict = IOServiceMatching(kIOUSBDeviceClassName);
+    CFDictionarySetValue(matchingDict, CFSTR(kUSBVendorName),
+                          CFNumberCreate(kCFAllocatorDefault,
+                                         kCFNumberSInt32Type, &usbVendor));
+    CFDictionarySetValue(matchingDict, CFSTR(kUSBProductName),
+                          CFNumberCreate(kCFAllocatorDefault,
+                                         kCFNumberSInt32Type, &usbProduct));
+	CFRetain(matchingDict);
+    CFRetain(matchingDict);
+    result = IOServiceAddMatchingNotification(gNotifyPort,
+                                               kIOFirstMatchNotification, matchingDict,
+                                               IOWarriorAdded, NULL, &gIOWarriorAddedIter);
+    IOWarriorAdded(NULL, gIOWarriorAddedIter);
+    matchingDict = (CFMutableDictionaryRef) CFRetain(matchingDict);
+    result = IOServiceAddMatchingNotification(gNotifyPort,
+                                               kIOTerminatedNotification, matchingDict,
+                                               IOWarriorRemoved, NULL, &gIOWarriorRemovedIter);
+    IOWarriorRemoved(NULL, gIOWarriorRemovedIter);
+     
+    CFRelease(matchingDict);
+	
+	// do the same for IOWarrior24PV devices
+    usbProduct = kIOWarrior24PVDeviceID;
+    matchingDict = IOServiceMatching(kIOUSBDeviceClassName);
+    CFDictionarySetValue(matchingDict, CFSTR(kUSBVendorName),
+                          CFNumberCreate(kCFAllocatorDefault,
+                                         kCFNumberSInt32Type, &usbVendor));
+    CFDictionarySetValue(matchingDict, CFSTR(kUSBProductName),
+                          CFNumberCreate(kCFAllocatorDefault,
+                                         kCFNumberSInt32Type, &usbProduct));
+	CFRetain(matchingDict);
+    CFRetain(matchingDict);
+    result = IOServiceAddMatchingNotification(gNotifyPort,
+                                               kIOFirstMatchNotification, matchingDict,
+                                               IOWarriorAdded, NULL, &gIOWarriorAddedIter);
+    IOWarriorAdded(NULL, gIOWarriorAddedIter);
+    matchingDict = (CFMutableDictionaryRef) CFRetain(matchingDict);
+    result = IOServiceAddMatchingNotification(gNotifyPort,
+                                               kIOTerminatedNotification, matchingDict,
+                                               IOWarriorRemoved, NULL, &gIOWarriorRemovedIter);
+    IOWarriorRemoved(NULL, gIOWarriorRemovedIter);
+     
+    CFRelease(matchingDict);
+
+	
     //Finished with master port
     mach_port_deallocate(mach_task_self(), masterPort);
 
@@ -185,7 +234,7 @@ int IOWarriorCountInterfaces ()
     return result;
 }
 
-// writes an 4 byte buffer to interface 0 of the first discovered IOWarrior
+// writes an 4 byte buffer to interface 0 of the first discovered IOWarrior40
 int IOWarriorWriteInterface0 (void *inData)
 {
     IOWarriorHIDDeviceInterface** interface = IOWarriorFirstInterfaceOfType (kIOWarrior40Interface0);
@@ -260,7 +309,7 @@ int IOWarriorWriteToInterface (IOWarriorHIDDeviceInterface** inInterface, int in
     IOReturn ioReturnValue = kIOReturnSuccess;
 
     // Open interface
-    ioReturnValue = (*inInterface)->open (inInterface, 0);
+   ioReturnValue = IOWarriorOpenInterfaceIfNecessary (inInterface);
     if (ioReturnValue != kIOReturnSuccess)
     {
         PrintErrMsgIfIOErr (ioReturnValue, "Could not open hid device interface");
@@ -271,12 +320,8 @@ int IOWarriorWriteToInterface (IOWarriorHIDDeviceInterface** inInterface, int in
     if (ioReturnValue != kIOReturnSuccess)
     {
         PrintErrMsgIfIOErr (ioReturnValue, "Could not write setReport on hid device interface");
-        (*inInterface)->close (inInterface);
         return ioReturnValue;
-    }
-
-    // close interface
-    //(*inInterface)->close (inInterface);    
+    }  
 
     return kIOReturnSuccess;
 }
@@ -310,25 +355,73 @@ int IOWarriorReadFromInterface (IOWarriorHIDDeviceInterface** inInterface, int i
     IOReturn 	ioReturnValue = kIOReturnSuccess;
     UInt32	dataSize = inSize;
 
-    ioReturnValue = (*inInterface)->open (inInterface, 0);
+
+    ioReturnValue = IOWarriorOpenInterfaceIfNecessary (inInterface);
     if (ioReturnValue != kIOReturnSuccess)
     {
         PrintErrMsgIfIOErr (ioReturnValue, "Could not open hid device interface");
         return ioReturnValue;
     }
-    // write to interface
-
+    // read from interface
     ioReturnValue = (*inInterface)->getReport (inInterface, kIOHIDReportTypeInput,
-                                             inReportID, outData, &dataSize, 50, NULL, NULL, NULL);
+                                             inReportID, outData, &dataSize, 100, NULL, NULL, NULL);
     if (ioReturnValue != kIOReturnSuccess)
     {
-        PrintErrMsgIfIOErr (ioReturnValue, "Could not write setReport on hid device interface");
-        (*inInterface)->close (inInterface);
+        PrintErrMsgIfIOErr (ioReturnValue, "Could not call getReport on hid device interface");
         return ioReturnValue;
     }
-    // close interface
-    (*inInterface)->close (inInterface);
     return ioReturnValue;
+}
+
+IOReturn IOWarriorOpenInterfaceIfNecessary (IOWarriorHIDDeviceInterface** inInterface)
+{
+	IOWarriorListNode	*listNode;
+    IOReturn			ioReturnValue = kIOReturnSuccess;
+
+	listNode = IOWarriorListNodeForInterface (inInterface);
+	
+	if (false == listNode->interfaceOpen)
+	{
+		ioReturnValue = (*inInterface)->open (inInterface, 0);
+		if (ioReturnValue != kIOReturnSuccess)
+			return ioReturnValue;
+		
+		listNode->interfaceOpen = true;
+	}
+	return ioReturnValue;
+}
+
+IOReturn IOWarriorCloseInterfaceIfNecessary(IOWarriorHIDDeviceInterface** inInterface)
+{
+	IOWarriorListNode	*listNode;
+    IOReturn			ioReturnValue = kIOReturnSuccess;
+
+	listNode = IOWarriorListNodeForInterface (inInterface);
+	
+	if (true == listNode->interfaceOpen)
+	{
+		ioReturnValue = (*inInterface)->close (inInterface);
+		if (kIOReturnSuccess == ioReturnValue)
+		{
+			listNode->interfaceOpen = false;
+		}
+	}
+	return ioReturnValue;
+}
+
+IOWarriorListNode* IOWarriorListNodeForInterface (IOWarriorHIDDeviceInterface** inInterface)
+{
+	IOWarriorListNode *currentNode = gIOWarriorList;
+    
+	while (currentNode)
+	{
+		if (currentNode->ioWarriorHIDInterface == inInterface )
+		{
+			return currentNode;
+		}
+		currentNode = currentNode->nextNode;
+	}
+	return nil;
 }
 
 // read inSize bytes from interface inInterfaceIndex of device inWarriorIndex to outData.
@@ -381,23 +474,22 @@ IOWarriorHIDDeviceInterface** IOWarriorGetInterface (int inWarriorIndex,int inIn
 /* Populates the linked list of known IOWarrior Interfaces. It makes the assumption that the hidObjectIterator object returns all interface 0 just before interface 1 for each connected IOWarrior. Caller is responsible for releasing interface by calling (*interface)->Release (interface). */
 void IOWarriorDiscoverInterfaces ()
 {
-    mach_port_t			masterPort = NULL;
-    io_iterator_t		hidObjectIterator = NULL;
+    mach_port_t			masterPort = nil;
+    io_iterator_t		hidObjectIterator = nil;
     IOReturn			ioReturnValue;
-    IOWarriorHIDDeviceInterface**	result = NULL;
+    IOWarriorHIDDeviceInterface**	result = nil;
     
 	//NSLog (@"entering IOWarriorDiscoverInterfaces");
     ioReturnValue = IOMasterPort (bootstrap_port, &masterPort);
     if (ioReturnValue)
     {
-        PrintErrMsgIfIOErr (ioReturnValue, "CouldnÕt create a master I/O Kit Port.");
+        PrintErrMsgIfIOErr (ioReturnValue, "Couldn't create a master I/O Kit Port.");
         return;
     }
     hidObjectIterator = IOWarriorFindHIDDevices (masterPort, kHIDPage_GenericDesktop, 0); 
-	//hidObjectIterator = IOWarriorFindHIDDevices (masterPort, kHIDPage_GenericDesktop, kHIDUsage_GD_GamePad); 
-	if (hidObjectIterator != NULL)
+	if (hidObjectIterator != nil)
     {
-        io_object_t 	hidDevice = NULL;
+        io_object_t 	hidDevice = nil;
         IOReturn 	ioReturnValue = kIOReturnSuccess;
         int 		iteratorIndex= 0;
         
@@ -434,7 +526,9 @@ void IOWarriorDiscoverInterfaces ()
                                        // if the HID Device is an IOWarrior
                     if (vendorID == kIOWarriorVendorID &&
                         (deviceID == kIOWarrior40DeviceID ||
-                         deviceID == kIOWarrior24DeviceID)) 
+                         deviceID == kIOWarrior24DeviceID ||
+						 deviceID == kIOWarrior56DeviceID ||
+						 deviceID == kIOWarrior24PVDeviceID)) 
                     {
                         PrintNotificationMessage ("found IOWarrior HID device\n");
                         result = IOWarriorCreateHIDDeviceInterface (hidDevice);
@@ -446,6 +540,10 @@ void IOWarriorDiscoverInterfaces ()
                             interfaceType = iteratorIndex % 2; // gives an IOWarrior40 interface
                             if (kIOWarrior24DeviceID == deviceID)
                                 interfaceType += 2;		// gives an IOWarrior24 interface
+							else if (kIOWarrior56DeviceID == deviceID)
+								interfaceType += 4;		// compute interface type for IOWarrior 56
+							else if (kIOWarrior24PVDeviceID == deviceID)
+								interfaceType += 6;
 							
 							mySerialNumberRef = NULL;
 							if (NULL == serialNumberRef)
@@ -490,17 +588,17 @@ io_iterator_t IOWarriorFindHIDDevices (const mach_port_t masterPort, UInt32 usag
     hidMatchDictionary = IOWarriorSetUpHIDMatchingDictionary (usagePage, usage);
     if (NULL == hidMatchDictionary)
     {
-        PrintErrMsg ("CouldnÕt create a matching dictionary.");
-        return NULL;
+        PrintErrMsg ("Couldn't create a matching dictionary.");
+        return nil;
     }
 
     // Now search I/O Registry for matching devices.
     ioReturnValue = IOServiceGetMatchingServices (masterPort, hidMatchDictionary, &hidObjectIterator);
     // If error, print message and hang (for debugging purposes).
-    if ((ioReturnValue != kIOReturnSuccess) | (hidObjectIterator == NULL))
+    if ((ioReturnValue != kIOReturnSuccess) | (hidObjectIterator == nil))
     {
-        PrintErrMsg ("CouldnÕt create a HID object iterator.");
-        return NULL;
+        PrintErrMsg ("Couldn't create a HID object iterator.");
+        return nil;
     }
 
     // IOServiceGetMatchingServices consumes a reference to the dictionary, so we don't need to release the dictionary ref.
@@ -607,7 +705,7 @@ IOWarriorHIDDeviceInterface ** IOWarriorCreateHIDDeviceInterface (io_object_t hi
 														   (void *) &pphidDeviceInterface);
 		//NSLog (@" after QueryInterface" );
         if (plugInResult != S_OK)
-            PrintErrMsg ("CouldnÕt query HID class device interface from plugInInterface");
+            PrintErrMsg ("Couldn't query HID class device interface from plugInInterface");
         (*plugInInterface)->Release (plugInInterface);
     }
     else
@@ -671,6 +769,7 @@ void IOWarriorAddInterfaceToList (IOWarriorHIDDeviceInterface** inInterface, int
     newNode = malloc (sizeof (IOWarriorListNode));
     newNode->ioWarriorHIDInterface = inInterface;
     newNode->interfaceType = inInterfaceType;
+	 newNode->interfaceOpen = false;
 	if (NULL != inDeviceSerialNumber)
 		CFRetain (inDeviceSerialNumber);
     newNode->serialNumber = inDeviceSerialNumber;
@@ -741,7 +840,7 @@ IOWarriorHIDDeviceInterface** IOWarriorFirstInterfaceOfType (int inInterfaceType
     
 	if (gIOWarriorListDirty)
 	{
-		IOWarriorDiscoverInterfaces ();
+		IOWarriorRebuildInterfaceList ();
 	}
     currentNode = gIOWarriorList;
     while (currentNode)

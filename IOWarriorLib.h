@@ -3,7 +3,7 @@
  *  IOWarriorHIDTest
  *
  *  Created by ilja on Sun Dec 29 2002.
- *  $Id: IOWarriorLib.h,v 1.1.1.1 2005-04-14 02:03:34 hww3 Exp $
+ *  $Id: IOWarriorLib.h,v 1.2 2007-06-13 02:08:00 hww3 Exp $
  *
  */
 
@@ -19,7 +19,7 @@
  
  Binaries compiled on Mac OS X 10.3 using this version of the IOWarrior Library will not work on earlier systems. However, binaries on 10.2.3 should also work on 10.2.3 or later. If you are using 10.3 and want to develop appplicaton that run on 10.2.x, too, select the 10.2.7 Cross Development SDK in XCode targets inspector. You have to install the additional SDK when installing the Mac OS X Developer Tools.
 
- $Id: IOWarriorLib.h,v 1.1.1.1 2005-04-14 02:03:34 hww3 Exp $
+ $Id: IOWarriorLib.h,v 1.2 2007-06-13 02:08:00 hww3 Exp $
 
  */
 
@@ -29,6 +29,8 @@
 #define kIOWarriorVendorID 1984
 #define kIOWarrior40DeviceID 0x1500
 #define kIOWarrior24DeviceID 0x1501
+#define kIOWarrior56DeviceID 0x1503
+#define kIOWarrior24PVDeviceID 0x1511
 
 #ifdef kIOHIDDeviceInterfaceID122
 // we are running on 10.3 or later
@@ -66,6 +68,31 @@
 #define kIOWarrior24Interface1 3
 
 /*!
+@defined kIOWarrior56Interface0
+ @discussion Interface type indentifier for an interface 0 of an IOWarrior 56.
+ */
+#define kIOWarrior56Interface0 4
+
+/*!
+@defined kIOWarrior56Interface1
+ @discussion Interface type indentifier for an interface 1 of an IOWarrior 56.
+ */
+#define kIOWarrior56Interface1 5
+
+/*!
+@defined kIOWarrior24PVInterface0
+ @discussion Interface type indentifier for an interface 0 of an IOWarrior 24.
+ */
+#define kIOWarrior24PVInterface0 6
+
+/*!
+@defined kIOWarrior24PVInterface1
+ @discussion Interface type indentifier for an interface 0 of an IOWarrior 24.
+ */
+#define kIOWarrior24PVInterface1 7
+
+
+/*!
 @struct IOWarriorListNodeStruct
  @discussion A structure implementing a linked list node. Used to keep track of all IOWarrior Interfaces
  connected to the system. You can use IOWarriorCountInterfaces and IOWarriorInterfaceListNodeAtIndex to iterate trough all interfaces.
@@ -74,6 +101,7 @@
  @field nextNode 		Pointer to the node in the interface list.
  @field serialNumber		The serial number of the interface.
  @field interfaceType		The type of the interface (kIOWarrior40Interface0, kIOWarrior40Interface1, ..) . 
+ @field interfaceOpened		Has the interface already been opened.
  */
 
 IONotificationPortRef GetNotificationPort ();
@@ -85,6 +113,7 @@ struct IOWarriorListNodeStruct
     struct                          IOWarriorListNodeStruct* nextNode;	// pointer to the next interface
     CFStringRef						serialNumber;				// the device serial number
     int                             interfaceType;				// the type of the interface
+	bool							interfaceOpen;					
 };
 
 typedef struct IOWarriorListNodeStruct IOWarriorListNode;
@@ -221,4 +250,9 @@ void IOWarriorSetDeviceCallback (IOWarriorDeviceCallbackFunctionPtr inCallbackPt
  */
 int IOWarriorSetInterruptCallback (IOWarriorHIDDeviceInterface** inInterface, void* inBuffer, UInt32 inBufferSize, 
                                   IOHIDReportCallbackFunction inCallbackPtr, void* inRefCon);
+
+IOWarriorListNode* IOWarriorListNodeForInterface (IOWarriorHIDDeviceInterface** inInterface);
+
+IOReturn IOWarriorOpenInterfaceIfNecessary (IOWarriorHIDDeviceInterface** inInterface);
+IOReturn IOWarriorCloseInterfaceIfNecessary(IOWarriorHIDDeviceInterface** inInterface);
 
