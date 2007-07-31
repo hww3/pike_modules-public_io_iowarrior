@@ -3,7 +3,7 @@
  *  IOWarriorHIDTest
  *
  *  Created by ilja on Sun Dec 29 2002.
- *  $Id: IOWarriorLib.c,v 1.2 2007-06-13 02:08:00 hww3 Exp $
+ *  $Id: IOWarriorLib.c,v 1.3 2007-07-31 02:25:16 hww3 Exp $
  *
  */
 
@@ -826,6 +826,12 @@ IOWarriorListNode* IOWarriorInterfaceListNodeAtIndex (int inIndex)
         currentNode = currentNode->nextNode;
     }
     return currentNode;
+}
+
+void IOWarriorClearDeviceCallback ()
+{
+    gIOWarriorCallBackPtr = NULL;
+    gIOWarriorCallBackRefCon = NULL;
 }
 
 void IOWarriorSetDeviceCallback (IOWarriorDeviceCallbackFunctionPtr inCallbackPtr, void* inRefCon)

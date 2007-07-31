@@ -53,18 +53,21 @@ Stdio.stdin.gets();
 int i = 0;
 do {
 
-  foreach(pinmap;; int p)
+  foreach(pinmap;int d; int p)
   {
+werror("%d\n", d);
  m->write_interface(0, sprintf("%04c", p));
-/* sleep(0.1);
- m->write_interface(0, sprintf("%c%c%c%c", 0,0,0,0));
- sleep(0.1);
- m->write_interface(0, sprintf("%04c", p));
- sleep(0.1);
- m->write_interface(0, sprintf("%c%c%c%c", 0,0,0,0));
+sleep(0.25);
 Stdio.stdin.gets();
+
+ m->write_interface(0, sprintf("%c%c%c%c", 0,0,0,0));
+/* sleep(0.1);
+ sleep(0.1);
+ m->write_interface(0, sprintf("%04c", p));
+ sleep(0.1);
+ m->write_interface(0, sprintf("%c%c%c%c", 0,0,0,0));
 */
-sleep(0.05);
+sleep(0.25);
   }
  i++;
 } while(i<10);
@@ -72,3 +75,4 @@ m->write_interface(0, sprintf("%c%c%c%c", 0,0,0,0));
 
 return 0;
 }
+

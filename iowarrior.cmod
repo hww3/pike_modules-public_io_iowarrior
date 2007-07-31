@@ -13,7 +13,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
- * $Id: iowarrior.cmod,v 1.4 2007-06-13 02:47:18 hww3 Exp $
+ * $Id: iowarrior.cmod,v 1.5 2007-07-31 02:25:16 hww3 Exp $
  */
 
 /*
@@ -85,9 +85,10 @@
 
   typedef struct
   {
-    
     int instance;
+	int set_device_callback;
   } IOWARRIOR_OBJECT_DATA;
+
 
 /*! @class IOWarrior
  *!
@@ -107,6 +108,7 @@ PIKECLASS IOWarrior
    CONSTANT("kIOWarrior56Interface1", kIOWarrior56Interface1);
   }
   CVAR IOWARRIOR_OBJECT_DATA * object_data;
+  PIKEVAR function device_callback;
 
 /*! @decl void set_interrupt_callback()
  *!
@@ -114,6 +116,30 @@ PIKECLASS IOWarrior
   PIKEFUN void set_interrupt_callback()
   {
 //    IOWarriorSetInterruptCallback();
+  }
+
+/*! @decl void set_device_callback(function callback)
+ *!
+ *!  @note 
+ *!   only works when running in the background, with Public.ObjectiveC.add_backend_runloop().
+ */
+  void device_callback_function(void * data)
+  {
+ //   printf("device_callback_function %p\n", ((struct IOWarrior_struct *)data)->device_callback);
+
+	push_svalue(&((struct IOWarrior_struct *)data)->device_callback);
+//    push_text("pushed function\n");
+
+	apply_svalue(Pike_sp-1, 0);
+  }
+
+  PIKEFUN void set_device_callback(function callback)
+  {
+	 THIS->object_data->set_device_callback = 1;
+	 assign_svalue(&(THIS->device_callback), callback);
+   // printf("device_callback_function %p\n", THIS->device_callback);
+	 IOWarriorSetDeviceCallback(device_callback_function, THIS);
+	 pop_stack();
   }
 
 /*! @decl int interface_type_for_index(int index) */
@@ -128,8 +154,6 @@ PIKEFUN int interface_type_for_index(int index)
   if(listNode)
     push_int(listNode->interfaceType);
   else push_int(-1);
-
-
 }
 
 /*! @decl array(int) read_interface0()
@@ -293,6 +317,12 @@ retval = IOWarriorCountInterfaces();
  
   EXIT
   {
+//    if(THIS->device_callback)
+//	  free_svalue(THIS->device_callback);
+	if((THIS->object_data)->set_device_callback != 0)
+	{
+		IOWarriorClearDeviceCallback();
+	}
     if(THIS->object_data)
       free(THIS->object_data);
   }

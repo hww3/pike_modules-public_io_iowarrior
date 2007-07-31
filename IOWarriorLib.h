@@ -3,7 +3,7 @@
  *  IOWarriorHIDTest
  *
  *  Created by ilja on Sun Dec 29 2002.
- *  $Id: IOWarriorLib.h,v 1.2 2007-06-13 02:08:00 hww3 Exp $
+ *  $Id: IOWarriorLib.h,v 1.3 2007-07-31 02:25:16 hww3 Exp $
  *
  */
 
@@ -19,7 +19,7 @@
  
  Binaries compiled on Mac OS X 10.3 using this version of the IOWarrior Library will not work on earlier systems. However, binaries on 10.2.3 should also work on 10.2.3 or later. If you are using 10.3 and want to develop appplicaton that run on 10.2.x, too, select the 10.2.7 Cross Development SDK in XCode targets inspector. You have to install the additional SDK when installing the Mac OS X Developer Tools.
 
- $Id: IOWarriorLib.h,v 1.2 2007-06-13 02:08:00 hww3 Exp $
+ $Id: IOWarriorLib.h,v 1.3 2007-07-31 02:25:16 hww3 Exp $
 
  */
 
@@ -237,6 +237,7 @@ int IOWarriorReadFromInterface (IOWarriorHIDDeviceInterface** inInterface, int i
  @discussion Use this function to install a custom callback function. You function will be called whenever IOWarrior devices are added or removed from the system. You should invalidate any references to IOWarriorListNode structures you might have saved when your callback functions gets called. Be sure to call IOWarriorCountInterfaces at least once after you callback function was invoked before calling any other functions from the IOWarrior Library.
  */
 void IOWarriorSetDeviceCallback (IOWarriorDeviceCallbackFunctionPtr inCallbackPtr, void* inRefCon);
+void IOWarriorClearDeviceCallback ();
 
 /*!
 @function IOWarriorSetInterruptCallback
