@@ -1,11 +1,13 @@
 object iow;
 
-void whee() { werror("whee\n"); }
+void whee(mixed ... args) { werror("args: %O\n", args); }
 
 int main()
 {
   iow = Public.IO.IOWarrior.IOWarrior();
-  iow->set_device_callback(whee);
+  write("is present: %d\n", iow->is_present());
+//  iow->set_device_callback(whee);
+  iow->set_report_callback(whee, 0);
   Public.ObjectiveC.add_backend_runloop();
   return -1;
 }

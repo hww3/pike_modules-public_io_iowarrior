@@ -1,6 +1,6 @@
 This module provides an interface to the IOWarrior USB IO device, manufactured
 by Code Mercenaries (www.codemerc.com.) This module has 
-been tested and is known to work on Pike 7.6 under Solaris and Linux. 
+been tested and is known to work on Pike 7.6 under Mac OS 10.4. 
 Please report problems and bugs to the author, listed in the
 AUTHORS document that came with this software.
 
