@@ -83,13 +83,8 @@
 
 #include "IOWarriorLib.h"
 
-  typedef struct
-  {
-    int instance;
-	int set_device_callback;
-	int set_report_callback;
-  } IOWARRIOR_OBJECT_DATA;
 
+DECLARATIONS
 
 /*! @class IOWarrior
  *!
@@ -97,19 +92,10 @@
 PIKECLASS IOWarrior
 {
 
-  EXTRA 
-  {
-   CONSTANT("kIOWarrior24Interface0", kIOWarrior24Interface0);
-   CONSTANT("kIOWarrior24Interface1", kIOWarrior24Interface1);
-   CONSTANT("kIOWarrior24PVInterface0", kIOWarrior24PVInterface0);
-   CONSTANT("kIOWarrior24PVInterface1", kIOWarrior24PVInterface1);
-   CONSTANT("kIOWarrior40Interface0", kIOWarrior40Interface0);
-   CONSTANT("kIOWarrior40Interface1", kIOWarrior40Interface1);
-   CONSTANT("kIOWarrior56Interface0", kIOWarrior56Interface0);
-   CONSTANT("kIOWarrior56Interface1", kIOWarrior56Interface1);
-  }
   CVAR void * buffer;
-  CVAR IOWARRIOR_OBJECT_DATA * object_data;
+  CVAR int instance;
+  CVAR int set_device_callback;
+  CVAR int set_report_callback;
   PIKEVAR function device_callback;
   PIKEVAR function report_callback;
 
@@ -152,7 +138,7 @@ PIKECLASS IOWarrior
 
     IOWarriorListNode * nodes;
 
-	 THIS->object_data->set_report_callback = 1;
+	 THIS->set_report_callback = 1;
 	 assign_svalue(&(THIS->report_callback), callback);
 
     nodes = IOWarriorInterfaceListNodeAtIndex (index);
@@ -168,7 +154,7 @@ PIKECLASS IOWarrior
 
   PIKEFUN void set_device_callback(function callback)
   {
-	 THIS->object_data->set_device_callback = 1;
+	 THIS->set_device_callback = 1;
 	 assign_svalue(&(THIS->device_callback), callback);
    // printf("device_callback_function %p\n", THIS->device_callback);
 	 IOWarriorSetDeviceCallback(device_callback_function, THIS);
@@ -332,36 +318,40 @@ retval = IOWarriorCountInterfaces();
     push_int(retval);
   }
 
-  INIT
+  EXTRA 
   {
+   CONSTANT("kIOWarrior24Interface0", kIOWarrior24Interface0);
+   CONSTANT("kIOWarrior24Interface1", kIOWarrior24Interface1);
+   CONSTANT("kIOWarrior24PVInterface0", kIOWarrior24PVInterface0);
+   CONSTANT("kIOWarrior24PVInterface1", kIOWarrior24PVInterface1);
+   CONSTANT("kIOWarrior40Interface0", kIOWarrior40Interface0);
+   CONSTANT("kIOWarrior40Interface1", kIOWarrior40Interface1);
+   CONSTANT("kIOWarrior56Interface0", kIOWarrior56Interface0);
+   CONSTANT("kIOWarrior56Interface1", kIOWarrior56Interface1);
+  }
+
+  PIKE_MODULE_INIT
+  {
+   INIT;
+
    int retval;
-   IOWARRIOR_OBJECT_DATA * iow;
-
-   iow = malloc(sizeof(IOWARRIOR_OBJECT_DATA));
-
    THIS->buffer = malloc(sizeof(char)*32);
-
-   THIS->object_data = iow;
-
-   if(iow == NULL) 
-     Pike_error("iowarrior_init: out of memory.\n");
-
     retval = IOWarriorInit();
     if(retval!=0) Pike_error("iowarrior_init: unable to initialize IO Warrior library.\n");
+
     }
  
-  EXIT
+  PIKE_MODULE_EXIT
   {
+	if(THIS->buffer) free(THIS->buffer);
 //    if(THIS->device_callback)
 //	  free_svalue(THIS->device_callback);
-	if((THIS->object_data)->set_device_callback != 0)
+	if(THIS->set_device_callback != 0)
 	{
 		IOWarriorClearDeviceCallback();
 	}
-    if(THIS->object_data)
-      free(THIS->object_data);
+    EXIT;
   }
-
 }
 /*! @endmodule
  */
