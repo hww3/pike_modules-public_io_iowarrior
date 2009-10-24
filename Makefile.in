@@ -4,7 +4,6 @@ VPATH=@srcdir@:@srcdir@/../..:../..
 OBJS=iowarrior.o IOWarriorLib.o
 MODDIR=Public.pmod/IO.pmod/
 MODNAME=IOWarrior
-MODULE_PMOD_IN=
 AUTODOC_SRC_IN=iowarrior.c
 
 CFLAGS=@IOWARRIOR_CFLAGS@
