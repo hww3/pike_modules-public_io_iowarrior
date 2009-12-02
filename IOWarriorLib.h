@@ -249,7 +249,7 @@ void IOWarriorClearDeviceCallback ();
  @param inCallbackPtr A pointer to your callback function. See IOHIDLib.h for more info.
  @param inRefCon A reference value passed to your callback on invocation.
  */
-int IOWarriorSetInterruptCallback (IOWarriorHIDDeviceInterface** inInterface, void* inBuffer, UInt32 inBufferSize, 
+int IOWarriorSetInterruptCallback (IOWarriorHIDDeviceInterface** inInterface, void* inBuffer, uint32_t inBufferSize, 
                                   IOHIDReportCallbackFunction inCallbackPtr, void* inRefCon);
 
 IOWarriorListNode* IOWarriorListNodeForInterface (IOWarriorHIDDeviceInterface** inInterface);

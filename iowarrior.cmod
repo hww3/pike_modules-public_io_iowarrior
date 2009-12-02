@@ -83,7 +83,6 @@
 
 #include "IOWarriorLib.h"
 
-
 DECLARATIONS
 
 /*! @class IOWarrior
@@ -92,7 +91,7 @@ DECLARATIONS
 PIKECLASS IOWarrior
 {
 
-  CVAR void * buffer;
+  CVAR char * buffer;
   CVAR int instance;
   CVAR int set_device_callback;
   CVAR int set_report_callback;
@@ -120,13 +119,12 @@ PIKECLASS IOWarrior
 	IOWarriorCountInterfaces();
   }
   
-  void report_callback_function(void * target, IOReturn result, void* refcon, void * sender, UInt32 buffersize)
+  void report_callback_function(void * target, IOReturn result, void* refcon, void * sender, uint32_t buffersize)
   {
     int i=0;
 	struct pike_string * s;
-//	printf("report_callback_function(): %s\n");
 
-	s = make_shared_binary_string(((struct IOWarrior_struct *)refcon)->buffer, buffersize);
+	s = make_shared_binary_string((target), buffersize);
 	push_string(s);
 	apply_svalue(&((struct IOWarrior_struct *)refcon)->report_callback, 1);
     pop_stack();	
@@ -134,6 +132,7 @@ PIKECLASS IOWarrior
 
   PIKEFUN void set_report_callback(function callback, int index)
   {
+    int rv;
     IOWarriorHIDDeviceInterface** interface;
 
     IOWarriorListNode * nodes;
@@ -147,7 +146,7 @@ PIKECLASS IOWarrior
 
     interface = nodes->ioWarriorHIDInterface;
 
-    int rv = IOWarriorSetInterruptCallback(interface, THIS->buffer, sizeof(THIS->buffer), report_callback_function, THIS);
+    rv = IOWarriorSetInterruptCallback(interface, &(THIS->buffer), sizeof(THIS->buffer), report_callback_function, THIS);
 
     pop_n_elems(args);
   }
@@ -188,7 +187,7 @@ PIKEFUN int interface_type_for_index(int index)
     data = malloc(num_elems);
 
     for(x=0; x<num_elems; x++)
-      data[x] = NULL;
+      data[x] = '\0';
 
     if(data == NULL) Pike_error("read_interface0(): unable to allocate memory.\n");
 
@@ -221,7 +220,7 @@ PIKEFUN int interface_type_for_index(int index)
     data = malloc(num_elems);
 
     for(x=0; x<num_elems; x++)
-      data[x] = NULL;
+      data[x] = '\0';
 
     if(data == NULL) Pike_error("read_interface0(): unable to allocate memory.\n");
 
@@ -276,7 +275,7 @@ PIKEFUN int interface_type_for_index(int index)
   PIKEFUN int interface_list_node(int ind)
   {
      IOWarriorListNode * node;
-     char * serial;
+     const char * serial;
 int interfaceCount;
 int x;
 int retval;
@@ -332,10 +331,9 @@ retval = IOWarriorCountInterfaces();
 
   PIKE_MODULE_INIT
   {
-   INIT;
-
-   int retval;
-   THIS->buffer = malloc(sizeof(char)*32);
+    int retval;
+    INIT;
+    THIS->buffer = malloc(sizeof(char)*32);
     retval = IOWarriorInit();
     if(retval!=0) Pike_error("iowarrior_init: unable to initialize IO Warrior library.\n");
 

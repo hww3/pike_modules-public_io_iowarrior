@@ -9,7 +9,7 @@
 
 #include "IOWarriorLib.h"
 
-#include <IOKit/hid/IOHIDLib.h>
+#include <IOKit/hid/IOHIDLibObsolete.h>
 #include <IOKit/hid/IOHIDUsageTables.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/IOCFPlugIn.h>
@@ -326,7 +326,7 @@ int IOWarriorWriteToInterface (IOWarriorHIDDeviceInterface** inInterface, int in
     return kIOReturnSuccess;
 }
 
-int IOWarriorSetInterruptCallback (IOWarriorHIDDeviceInterface** inInterface, void* inBuffer, UInt32 inBufferSize, 
+int IOWarriorSetInterruptCallback (IOWarriorHIDDeviceInterface** inInterface, void* inBuffer, uint32_t inBufferSize, 
                                   IOHIDReportCallbackFunction inCallbackPtr, void* inRefCon)
 {
 #ifdef kIOHIDDeviceInterfaceID122

@@ -1,6 +1,6 @@
 object iow;
 
-void whee(mixed ... args) { werror("args: %O\n", args); }
+void whee(mixed ... args) { werror("args: %O\n", array_sscanf(args[0], "%c")); }
 
 int main()
 {
