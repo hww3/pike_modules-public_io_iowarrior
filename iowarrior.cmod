@@ -373,7 +373,7 @@ PIKECLASS IOWarriorDevice
       if(THIS->ioHandle == NULL)
         Pike_error("node does not exist!\n");
 
-      id = IowKitProductId(THIS->ioHandle);
+      id = IowKitGetProductId(THIS->ioHandle);
       switch(id)
       {
           case IOWKIT_PRODUCT_ID_IOW24:
@@ -454,7 +454,7 @@ PIKECLASS IOWarriorDevice
         if(THIS->ioHandle == NULL)
           Pike_error("node does not exist!\n");
 
-        id = IowKitProductId(THIS->ioHandle);
+        id = IowKitGetProductId(THIS->ioHandle);
         switch(id)
         {
             case IOWKIT_PRODUCT_ID_IOW24:
@@ -545,7 +545,7 @@ PIKECLASS IOWarriorDevice
          if(ioHandle == NULL)
            Pike_error("node does not exist!\n");
 
-         retval = IowKitProductId(ioHandle);
+         retval = IowKitGetProductId(ioHandle);
          
          // printf("device: %s\n", serial);
          pop_stack();
