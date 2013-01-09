@@ -355,15 +355,21 @@ retval = IOWarriorCountInterfaces();
 }
 
 #else
+#include <wchar.h>
 #include "iowkit.h"
+
+DECLARATIONS
 
 PIKECLASS IOWarriorDevice
 {
     CVAR IOWKIT_HANDLE ioHandle;
-    ULONG res;
     
     PIKEFUN void write_interface0(string data)
     {
+      ULONG res;
+      ULONG id;
+      int x;
+
       if(THIS->ioHandle == NULL)
         Pike_error("node does not exist!\n");
 
@@ -371,6 +377,7 @@ PIKECLASS IOWarriorDevice
       switch(id)
       {
           case IOWKIT_PRODUCT_ID_IOW24:
+	{
               IOWKIT24_IO_REPORT report;
               if(data->len != 2)
               {
@@ -381,13 +388,15 @@ PIKECLASS IOWarriorDevice
               for(x=0; x<2; x++)
                 report.Bytes[x] = data->str[x];
               res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT24_IO_REPORT_SIZE);
-              if(res != IOWKIT24_IO_REPORT_SIZE))
+              if(res != IOWKIT24_IO_REPORT_SIZE)
               {
                 pop_stack();
                 Pike_error("Error writing data.\n");
               }
+}
               break;
           case IOWKIT_PRODUCT_ID_IOW40:
+{
               IOWKIT40_IO_REPORT report;
               if(data->len != 4)
               {
@@ -397,12 +406,13 @@ PIKECLASS IOWarriorDevice
               for(x=0; x<4; x++)
                 report.Bytes[x] = data->str[x];
               res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT40_IO_REPORT_SIZE);
-              if(res != IOWKIT40_IO_REPORT_SIZE))
+              if(res != IOWKIT40_IO_REPORT_SIZE)
                 Pike_error("Error writing data.\n");
-    
+}    
               break;
     
           case IOWKIT_PRODUCT_ID_IOW56:
+{
               IOWKIT56_IO_REPORT report;
               if(data->len != 7)
               {
@@ -413,11 +423,12 @@ PIKECLASS IOWarriorDevice
                 report.Bytes[x] = data->str[x];
              
               res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT56_IO_REPORT_SIZE);
-              if(res != IOWKIT56_IO_REPORT_SIZE))
+              if(res != IOWKIT56_IO_REPORT_SIZE)
               {
                 pop_stack();
                 Pike_error("Error writing data.\n");
               }
+}
               break;
     
           default:
@@ -428,7 +439,7 @@ PIKECLASS IOWarriorDevice
       
     }
     
-    *! @decl array(int) read_interface0()
+   /*! @decl array(int) read_interface0()
      *!
      */
       PIKEFUN array read_interface0()
@@ -436,9 +447,9 @@ PIKECLASS IOWarriorDevice
         char * data;
         int retval;
         int num_elems = 0;
-        int x;
         ULONG id;
         ULONG res;
+	int x;
         
         if(THIS->ioHandle == NULL)
           Pike_error("node does not exist!\n");
@@ -447,32 +458,38 @@ PIKECLASS IOWarriorDevice
         switch(id)
         {
             case IOWKIT_PRODUCT_ID_IOW24:
+{
                 IOWKIT24_IO_REPORT report;
                 res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT24_IO_REPORT_SIZE);
-                if(res != IOWKIT24_IO_REPORT_SIZE))
+                if(res != IOWKIT24_IO_REPORT_SIZE)
                   Pike_error("Error reading data.\n");
  
                 for(x=0; x<2; x++)
                   push_int((unsigned char)report.Bytes[x]);                
+}
                 break;
             case IOWKIT_PRODUCT_ID_IOW40:
+{
                 IOWKIT40_IO_REPORT report;
                 res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT40_IO_REPORT_SIZE);
 
-                if(res != IOWKIT40_IO_REPORT_SIZE))
+                if(res != IOWKIT40_IO_REPORT_SIZE)
                   Pike_error("Error reading data.\n");
 
                 for(x=0; x<4; x++)
                   push_int((unsigned char)report.Bytes[x]);
+}
                 break;
             case IOWKIT_PRODUCT_ID_IOW56:
+{
                 IOWKIT56_IO_REPORT report;
                 res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT56_IO_REPORT_SIZE);
-                if(res != IOWKIT56_IO_REPORT_SIZE))
+                if(res != IOWKIT56_IO_REPORT_SIZE)
                   Pike_error("Error reading data.\n");
                 
                 for(x=0; x<7; x++)
                   push_int((unsigned char)report.Bytes[x]);
+}
                 break;
             default:
                 Pike_error("Unknown device type.\n");
@@ -507,7 +524,7 @@ PIKECLASS IOWarriorDevice
     }
     PIKEFUN string get_serial_number()
     {
-        WCHAR buffer[9];
+        wchar_t buffer[9];
 
         if(THIS->ioHandle == NULL)
           Pike_error("node does not exist!\n");
@@ -586,7 +603,7 @@ PIKECLASS IOWarriorDevice
   PIKE_MODULE_EXIT
   {
     if(THIS->ioHandle)
- 		IowKitCloseDevice(THIS->ioHandle);
+     IowKitCloseDevice(THIS->ioHandle);
     EXIT;
   }
 
