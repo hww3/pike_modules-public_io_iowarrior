@@ -1,12 +1,36 @@
 # $Id: configure.in,v 1.1.1.1 2005-04-14 02:03:31 hww3 Exp $
 AC_INIT(iowarrior.cmod)
-
 AC_MODULE_INIT()
 AC_CONFIG_HEADERS(iowarrior_config.h)
 
-# PKG_CHECK_MODULES(XML2, libxml-2.0)
 
-IOWARRIOR_LIBS="-framework IOKit"
+m4_define([MY_CHECK_FRAMEWORK],
+  [AC_CACHE_CHECK([if -framework $1 works],[my_cv_framework_$1],
+     [save_LIBS="$LIBS"
+     LIBS="$LIBS -framework $1"
+     AC_LINK_IFELSE([AC_LANG_PROGRAM([],[])],
+             [my_cv_framework_$1=yes],
+            [my_cv_framework_$1=no])
+     LIBS="$save_LIBS"
+    ])
+   if test "$my_cv_framework_$1"="yes"; then
+       AC_DEFINE(AS_TR_CPP([HAVE_FRAMEWORK_$1]),1,
+            [Define if you have the  $1 framework])
+   AS_TR_CPP([FRAMEWORK_$1])="-framework $1"
+   AC_SUBST(AS_TR_CPP([FRAMEWORK_$1]))
+   fi])
+
+
+MY_CHECK_FRAMEWORK([IOKit])
+
+if test "x${FRAMEWORK_IOKIT}" != "x" ; then
+IOWARRIOR_LIBS="${FRAMEWORK_IOKIT}"
+IOWARRIOR_OBJS="IOWarriorLib.o"
+else
+# not OSX, therefore assumed to be the /dev/iowarrior based interface.
+IOWARRIOR_LIBS=""
+IOWARRIOR_OBJS="iowkit.o"
+fi
 
 CPPFLAGS="${CPPFLAGS} ${IOWARRIOR_CFLAGS}"
 LDFLAGS="${LDFLAGS} ${IOWARRIOR_LIBS}"
@@ -17,6 +41,7 @@ LDFLAGS="${LDFLAGS} ${IOWARRIOR_LIBS}"
 
 AC_SUBST(IOWARRIOR_CFLAGS) 
 AC_SUBST(IOWARRIOR_LIBS)
+AC_SUBST(IOWARRIOR_OBJS)
 
 AC_OUTPUT(Makefile)
 

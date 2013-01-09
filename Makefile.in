@@ -1,7 +1,7 @@
 # $Id: Makefile.in,v 1.1.1.1 2005-04-14 02:03:34 hww3 Exp $
 @make_variables@
 VPATH=@srcdir@:@srcdir@/../..:../..
-OBJS=iowarrior.o IOWarriorLib.o
+OBJS=@IOWARRIOR_OBJS@ iowarrior.o
 MODDIR=Public.pmod/IO.pmod/
 MODNAME=IOWarrior
 AUTODOC_SRC_IN=iowarrior.c

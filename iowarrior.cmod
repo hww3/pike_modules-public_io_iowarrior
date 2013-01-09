@@ -81,6 +81,8 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef HAVE_FRAMEWORK_IOKIT
+
 #include "IOWarriorLib.h"
 
 DECLARATIONS
@@ -88,7 +90,7 @@ DECLARATIONS
 /*! @class IOWarrior
  *!
  */
-PIKECLASS IOWarrior
+PIKECLASS IOWarriorIOKit
 {
 
   CVAR char * buffer;
@@ -113,7 +115,7 @@ PIKECLASS IOWarrior
  */
   void device_callback_function(void * data)
   {
-	push_svalue(&((struct IOWarrior_struct *)data)->device_callback);
+	push_svalue(&((struct IOWarriorIOKit_struct *)data)->device_callback);
 
 	apply_svalue(Pike_sp-1, 0);
 	IOWarriorCountInterfaces();
@@ -126,7 +128,7 @@ PIKECLASS IOWarrior
 
 	s = make_shared_binary_string((target), buffersize);
 	push_string(s);
-	apply_svalue(&((struct IOWarrior_struct *)refcon)->report_callback, 1);
+	apply_svalue(&((struct IOWarriorIOKit_struct *)refcon)->report_callback, 1);
     pop_stack();	
   }
 
@@ -351,6 +353,247 @@ retval = IOWarriorCountInterfaces();
     EXIT;
   }
 }
+
+#else
+#include "iowkit.h"
+
+PIKECLASS IOWarriorDevice
+{
+    CVAR IOWKIT_HANDLE ioHandle;
+    ULONG res;
+    
+    PIKEFUN void write_interface0(string data)
+    {
+      if(THIS->ioHandle == NULL)
+        Pike_error("node does not exist!\n");
+
+      id = IowKitProductId(THIS->ioHandle);
+      switch(id)
+      {
+          case IOWKIT_PRODUCT_ID_IOW24:
+              IOWKIT24_IO_REPORT report;
+              if(data->len != 2)
+              {
+                pop_stack();
+                Pike_error("write_interface0(): too much data to write, expected 2 bytes.\n");
+              }
+              
+              for(x=0; x<2; x++)
+                report.Bytes[x] = data->str[x];
+              res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT24_IO_REPORT_SIZE);
+              if(res != IOWKIT24_IO_REPORT_SIZE))
+              {
+                pop_stack();
+                Pike_error("Error writing data.\n");
+              }
+              break;
+          case IOWKIT_PRODUCT_ID_IOW40:
+              IOWKIT40_IO_REPORT report;
+              if(data->len != 4)
+              {
+                pop_stack();
+                Pike_error("write_interface0(): too much data to write, expected 4 bytes.\n");
+              }
+              for(x=0; x<4; x++)
+                report.Bytes[x] = data->str[x];
+              res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT40_IO_REPORT_SIZE);
+              if(res != IOWKIT40_IO_REPORT_SIZE))
+                Pike_error("Error writing data.\n");
+    
+              break;
+    
+          case IOWKIT_PRODUCT_ID_IOW56:
+              IOWKIT56_IO_REPORT report;
+              if(data->len != 7)
+              {
+                pop_stack();
+                Pike_error("write_interface0(): too much data to write, expected 7 bytes.\n");
+                }
+              for(x=0; x<7; x++)
+                report.Bytes[x] = data->str[x];
+             
+              res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT56_IO_REPORT_SIZE);
+              if(res != IOWKIT56_IO_REPORT_SIZE))
+              {
+                pop_stack();
+                Pike_error("Error writing data.\n");
+              }
+              break;
+    
+          default:
+              pop_stack();
+              Pike_error("Unknown device type.\n");
+              break;
+      } 
+      
+    }
+    
+    *! @decl array(int) read_interface0()
+     *!
+     */
+      PIKEFUN array read_interface0()
+      {
+        char * data;
+        int retval;
+        int num_elems = 0;
+        int x;
+        ULONG id;
+        ULONG res;
+        
+        if(THIS->ioHandle == NULL)
+          Pike_error("node does not exist!\n");
+
+        id = IowKitProductId(THIS->ioHandle);
+        switch(id)
+        {
+            case IOWKIT_PRODUCT_ID_IOW24:
+                IOWKIT24_IO_REPORT report;
+                res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT24_IO_REPORT_SIZE);
+                if(res != IOWKIT24_IO_REPORT_SIZE))
+                  Pike_error("Error reading data.\n");
+ 
+                for(x=0; x<2; x++)
+                  push_int((unsigned char)report.Bytes[x]);                
+                break;
+            case IOWKIT_PRODUCT_ID_IOW40:
+                IOWKIT40_IO_REPORT report;
+                res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT40_IO_REPORT_SIZE);
+
+                if(res != IOWKIT40_IO_REPORT_SIZE))
+                  Pike_error("Error reading data.\n");
+
+                for(x=0; x<4; x++)
+                  push_int((unsigned char)report.Bytes[x]);
+                break;
+            case IOWKIT_PRODUCT_ID_IOW56:
+                IOWKIT56_IO_REPORT report;
+                res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT56_IO_REPORT_SIZE);
+                if(res != IOWKIT56_IO_REPORT_SIZE))
+                  Pike_error("Error reading data.\n");
+                
+                for(x=0; x<7; x++)
+                  push_int((unsigned char)report.Bytes[x]);
+                break;
+            default:
+                Pike_error("Unknown device type.\n");
+                break;
+        } 
+
+        f_aggregate(num_elems);
+      }
+    
+      /*! @decl void set_read_timeout(int msec)
+       *!
+       */
+    PIKEFUN void set_read_timeout(int msec)
+    {
+        if(THIS->ioHandle == NULL)
+            Pike_error("node does not exist!\n");
+            
+        IowKitSetTimeout(THIS->ioHandle, msec);
+        pop_n_elems(args);
+    }
+    
+     /*! @decl void set_write_timeout(int msec)
+       *!
+       */
+    PIKEFUN void set_write_timeout(int msec)
+    {
+        if(THIS->ioHandle == NULL)
+            Pike_error("node does not exist!\n");
+            
+        IowKitSetWriteTimeout(THIS->ioHandle, msec);
+        pop_n_elems(args);
+    }
+    PIKEFUN string get_serial_number()
+    {
+        WCHAR buffer[9];
+
+        if(THIS->ioHandle == NULL)
+          Pike_error("node does not exist!\n");
+
+        IowKitGetSerialNumber(THIS->ioHandle, buffer);
+        push_text(buffer);
+    }
+    
+    /*! @decl int interface_list_node(int ind)
+     *!
+     */
+      PIKEFUN int interface_list_node(int ind)
+      {
+        IOWKIT_HANDLE ioHandle;
+        ULONG retval;
+
+         ioHandle = IowKitGetDeviceHandle(ind);
+         if(ioHandle == NULL)
+           Pike_error("node does not exist!\n");
+
+         retval = IowKitProductId(ioHandle);
+         
+         // printf("device: %s\n", serial);
+         pop_stack();
+         push_int(retval);
+      }
+
+    
+    
+    /*! @decl int is_present()
+     *!
+     */
+      PIKEFUN int is_present()
+      {
+        ULONG retval;
+
+        retval = IowKitGetNumDevs();
+
+        push_int(retval>0);
+      }
+    
+/*! @decl int count_interfaces()
+ *!
+ */
+  PIKEFUN int count_interfaces()
+  {
+    ULONG retval;
+
+    retval = IowKitGetNumDevs();
+
+    push_int((int)retval);
+  }
+
+
+  EXTRA 
+  {
+    CONSTANT("IOWKIT_PRODUCT_ID_IOW24", IOWKIT_PRODUCT_ID_IOW24);
+    CONSTANT("IOWKIT_PRODUCT_ID_IOW40", IOWKIT_PRODUCT_ID_IOW40);
+    CONSTANT("IOWKIT_PRODUCT_ID_IOW56", IOWKIT_PRODUCT_ID_IOW56);
+  }
+
+  PIKE_MODULE_INIT
+  {
+	IOWKIT_HANDLE ioHandle;
+
+    INIT;
+
+	ioHandle = IowKitOpenDevice(); 
+	
+	if (ioHandle != NULL)
+	{
+		THIS->ioHandle = ioHandle;
+	}
+  }
+ 
+  PIKE_MODULE_EXIT
+  {
+    if(THIS->ioHandle)
+ 		IowKitCloseDevice(THIS->ioHandle);
+    EXIT;
+  }
+
+}
+
+#endif /* HAVE_FRAMEWORK_IOKIT */
+
 /*! @endmodule
  */
 
