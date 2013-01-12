@@ -5,6 +5,7 @@ OBJS=@IOWARRIOR_OBJS@ iowarrior.o
 MODDIR=Public.pmod/IO.pmod/
 MODNAME=IOWarrior
 AUTODOC_SRC_IN=iowarrior.c
+MODULE_PMOD_IN=module.pmod.in
 
 CFLAGS=@IOWARRIOR_CFLAGS@
 LDFLAGS=@IOWARRIOR_LIBS@
