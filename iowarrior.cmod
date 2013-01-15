@@ -192,8 +192,9 @@ PIKEFUN int interface_type_for_index(int index)
       data[x] = '\0';
 
     if(data == NULL) Pike_error("read_interface0(): unable to allocate memory.\n");
-
+    THREADS_ALLOW();
     retval = IOWarriorReadInterface0(data);
+    THREADS_DISALLOW();
 
   //  for(x=0; x<num_elems; x++)
   //    printf("%02x\n", (unsigned char)(data[x]));
@@ -226,7 +227,9 @@ PIKEFUN int interface_type_for_index(int index)
 
     if(data == NULL) Pike_error("read_interface0(): unable to allocate memory.\n");
 
+    THREADS_ALLOW();
     retval = IOWarriorReadFromInterface(listNode->ioWarriorHIDInterface, reportID, num_elems, data);
+    THREADS_DISALLOW();
 
   //  for(x=0; x<num_elems; x++)
   //    printf("%02x\n", (unsigned char)(data[x]));
@@ -244,7 +247,10 @@ PIKEFUN int interface_type_for_index(int index)
   PIKEFUN int write_interface0(string d)
   {
     int retval;
+
+    THREADS_ALLOW();
     retval = IOWarriorWriteInterface0(d->str);
+    THREADS_DISALLOW();
 
     pop_n_elems(args);
 
@@ -264,7 +270,9 @@ PIKEFUN int interface_type_for_index(int index)
     if(listNode == NULL)
       Pike_error("invalid interface\n");
 
+    THREADS_ALLOW();
     retval = IOWarriorWriteToInterface(listNode->ioWarriorHIDInterface, d->len, d->str);
+    THREADS_DISALLOW();
 
     pop_n_elems(args);
 
@@ -363,6 +371,12 @@ DECLARATIONS
 PIKECLASS IOWarriorDevice
 {
     CVAR IOWKIT_HANDLE ioHandle;
+
+    PIKEFUN void create()
+    {
+      THIS->ioHandle = IowKitOpenDevice(); 
+      printf("iohandle: %p\n", THIS->ioHandle);
+    }
     
     PIKEFUN void write_interface0(string data)
     {
@@ -387,7 +401,9 @@ PIKECLASS IOWarriorDevice
               
               for(x=0; x<2; x++)
                 report.Bytes[x] = data->str[x];
+    THREADS_ALLOW();
               res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT24_IO_REPORT_SIZE);
+    THREADS_DISALLOW();
               if(res != IOWKIT24_IO_REPORT_SIZE)
               {
                 pop_stack();
@@ -405,7 +421,9 @@ PIKECLASS IOWarriorDevice
               }
               for(x=0; x<4; x++)
                 report.Bytes[x] = data->str[x];
+    THREADS_ALLOW();
               res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT40_IO_REPORT_SIZE);
+    THREADS_DISALLOW();
               if(res != IOWKIT40_IO_REPORT_SIZE)
                 Pike_error("Error writing data.\n");
 }    
@@ -422,7 +440,9 @@ PIKECLASS IOWarriorDevice
               for(x=0; x<7; x++)
                 report.Bytes[x] = data->str[x];
              
+    THREADS_ALLOW();
               res = IowKitWrite(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT56_IO_REPORT_SIZE);
+    THREADS_DISALLOW();
               if(res != IOWKIT56_IO_REPORT_SIZE)
               {
                 pop_stack();
@@ -442,7 +462,7 @@ PIKECLASS IOWarriorDevice
    /*! @decl array(int) read_interface0()
      *!
      */
-      PIKEFUN array read_interface0()
+      PIKEFUN string read_interface0()
       {
         char * data;
         int retval;
@@ -459,36 +479,56 @@ PIKECLASS IOWarriorDevice
         {
             case IOWKIT_PRODUCT_ID_IOW24:
 {
+		struct pike_string * s;
                 IOWKIT24_IO_REPORT report;
+    THREADS_ALLOW();
                 res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT24_IO_REPORT_SIZE);
+    THREADS_DISALLOW();
                 if(res != IOWKIT24_IO_REPORT_SIZE)
-                  Pike_error("Error reading data.\n");
- 
-                for(x=0; x<2; x++)
-                  push_int((unsigned char)report.Bytes[x]);                
+                {
+                  push_int(0);
+                }
+                else
+                { 
+  	          s = make_shared_binary_string(report.Bytes, 2);
+		  push_string(s);
+                }
 }
                 break;
             case IOWKIT_PRODUCT_ID_IOW40:
 {
+		struct pike_string * s;
                 IOWKIT40_IO_REPORT report;
+    THREADS_ALLOW();
                 res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT40_IO_REPORT_SIZE);
-
+    THREADS_DISALLOW();
                 if(res != IOWKIT40_IO_REPORT_SIZE)
-                  Pike_error("Error reading data.\n");
-
-                for(x=0; x<4; x++)
-                  push_int((unsigned char)report.Bytes[x]);
+                {
+                  push_int(0);
+                }
+                else
+                { 
+    	          s = make_shared_binary_string(report.Bytes, 4);
+		  push_string(s);
+                }
 }
                 break;
             case IOWKIT_PRODUCT_ID_IOW56:
 {
+		struct pike_string * s;
                 IOWKIT56_IO_REPORT report;
+    THREADS_ALLOW();
                 res = IowKitRead(THIS->ioHandle, IOW_PIPE_IO_PINS, &report, IOWKIT56_IO_REPORT_SIZE);
+    THREADS_DISALLOW();
                 if(res != IOWKIT56_IO_REPORT_SIZE)
-                  Pike_error("Error reading data.\n");
-                
-                for(x=0; x<7; x++)
-                  push_int((unsigned char)report.Bytes[x]);
+                {
+                  push_int(0);
+                }
+                else
+                { 
+   	          s = make_shared_binary_string(report.Bytes, 7);
+		  push_string(s);
+                }
 }
                 break;
             default:
@@ -496,7 +536,6 @@ PIKECLASS IOWarriorDevice
                 break;
         } 
 
-        f_aggregate(num_elems);
       }
     
       /*! @decl void set_read_timeout(int msec)
@@ -526,6 +565,7 @@ PIKECLASS IOWarriorDevice
     {
         wchar_t buffer[9];
 
+printf("ioHandle: %p\n", THIS->ioHandle);
         if(THIS->ioHandle == NULL)
           Pike_error("node does not exist!\n");
 
@@ -588,22 +628,16 @@ PIKECLASS IOWarriorDevice
 
   PIKE_MODULE_INIT
   {
-	IOWKIT_HANDLE ioHandle;
-
     INIT;
-
-	ioHandle = IowKitOpenDevice(); 
-	
-	if (ioHandle != NULL)
-	{
-		THIS->ioHandle = ioHandle;
-	}
   }
  
   PIKE_MODULE_EXIT
   {
     if(THIS->ioHandle)
+    {
      IowKitCloseDevice(THIS->ioHandle);
+     free(THIS->ioHandle);
+    }
     EXIT;
   }
 

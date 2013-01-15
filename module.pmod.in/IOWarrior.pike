@@ -4,7 +4,14 @@
 #if constant (.IOWarriorIOKit) /* IOWarriorIOKit for Darwin */
 inherit .IOWarriorIOKit;
 
-#elseif constant (IOWarriorDevice) /* IOWarriorDevice for Linux */
+static void create()
+{
+  ::create();
+
+  Public.ObjectiveC.add_backend_runloop();
+}
+
+#elseif constant (.IOWarriorDevice) /* IOWarriorDevice for Linux */
 inherit .IOWarriorDevice;
 
 function report_callback;
@@ -20,7 +27,9 @@ void set_report_callback(function cb, int index)
   {
     thread_exit = 0;
     set_read_timeout(1000);
-    report_thread = Thread.Thread(cb, index);
+werror("set read timeout.\n");
+    report_thread = Thread.Thread(run_callback_thread, 10);
+werror("created thread.\n");
   }
   else
   {
@@ -28,12 +37,14 @@ void set_report_callback(function cb, int index)
   }
 }
 
-void run_callback_thread()
+void run_callback_thread(int index)
 {
   while(!thread_exit)
   {
-    string s = read_interface0();
-    if(s)
+write("reading.\n"); 
+   string s;
+    s = read_interface0();
+    if(stringp(s))
     {
       report_callback(s);
     }
