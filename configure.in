@@ -24,10 +24,13 @@ m4_define([MY_CHECK_FRAMEWORK],
 
 
 MY_CHECK_FRAMEWORK([IOKit])
+AC_CHECK_LIB(iowkit, printf)
 
 if test "x${FRAMEWORK_IOKIT}" != "x" ; then
 IOWARRIOR_LIBS="${FRAMEWORK_IOKIT}"
 IOWARRIOR_OBJS="IOWarriorLib.o"
+elif test $ac_cv_lib_iowkit_printf = yes; then
+IOWARRIOR_LIBS="-liowkit"
 else
 # not OSX, therefore assumed to be the /dev/iowarrior based interface.
 IOWARRIOR_LIBS=""
